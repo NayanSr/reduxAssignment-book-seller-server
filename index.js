@@ -38,7 +38,7 @@ async function run() {
     app.get("/allBooks/:id", async (req, res) => {
       const { id } = req.params;
       const query = { _id: new ObjectId(id) };
-      console.log(query);
+      // console.log(query);
       /*  
       const options = {
         projection: {
@@ -52,7 +52,7 @@ async function run() {
        */
       // const result = await booksCollection.findOne(query, options);
       const result = await booksCollection.findOne(query);
-      console.log(result);
+      // console.log(result);
       res.send(result);
     });
 
@@ -62,18 +62,41 @@ async function run() {
       const result = await booksCollection.insertOne(book);
       res.send(result);
     });
+    //! Update a book
+    app.put("/allBooks/:id", async (req, res) => {
+      const { id } = req.params;
+      const filter = { _id: new ObjectId(id) };
+      // console.log(filter);
+      const options = { upsert: true };
+      const updatedBook = req.body;
+
+      const book = {
+        $set: {
+          title: updatedBook.title,
+          genre: updatedBook.genre,
+          publicationYear: updatedBook.publicationYear,
+          img: updatedBook.img,
+          email: updatedBook.email,
+          price: updatedBook.price,
+        },
+      };
+      // console.log(book);
+      const result = await booksCollection.updateOne(filter, book, options);
+      res.send(result);
+      // console.log(result);
+    });
 
     //! post a comment
     app.post("/comment/:id", async (req, res) => {
       const productId = req.params.id;
       const comment = req.body.reviews;
-      console.log(productId, comment);
+      // console.log(productId, comment);
 
       const result = await booksCollection.updateOne(
         { _id: new ObjectId(productId) },
         { $push: { reviews: comment } }
       );
-      console.log(result);
+      // console.log(result);
 
       if (result.modifiedCount !== 1) {
         console.error("Product not found or comment not added");
@@ -83,6 +106,15 @@ async function run() {
 
       console.log("Comment added successfully");
       res.json({ message: "Comment added successfully" });
+    });
+
+    //! delete one document
+
+    app.delete("/allBooks/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await booksCollection.deleteOne(query);
+      res.send(result);
     });
 
     await client.db("admin").command({ ping: 1 });
